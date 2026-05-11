@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+
+
+```{r}
+# SCRIPT 2/2 - USe manually indicated X chromosome to cut out the single molecule localizations within it:
+# Input: your path to the directory containing output from SCRIPT1 and full FOV localization files from Stormtracker
+# Output:
+# Next: perform fast tracking or slow tracking using output file with localizations
+#
+# uses: https://cran.r-project.org/web/packages/ptinpoly/ptinpoly.pdf
+library(ptinpoly); library(stringr);
+##################################################################
+data<-"D:/SPT/27.09.2022/27.09.2022_B12_day 0_DOX24h_tracking_Xi composite and pos.out_Random region"   # <<<<< indicate your path!
+##################################################################
+
+
+
+
+ROI.names <- list.files(data, full.names = TRUE, recursive = FALSE, pattern = "Random.csv") # ".csv" for .csv files only 
+file.names <- list.files(data, full.names = TRUE, recursive = FALSE, pattern = "pos.out") #
+
+for (i in 1:length(file.names)){ # % % % % 
+### load localizations:
+df<-read.table(file.names[i], colClasses = "factor")
+df2<-as.data.frame.matrix(df)
+colnames(df2)<-df2[1,]; 
+df2<-df2[-1,];  # now df2 is a regular data.frame that can be then filtered
+### load ROI of X-chromosome ###
+polygon<-read.csv(ROI.names[i])
+
+#Queries<-data.frame(cbind(df2$XCENTER, df2$YCENTER)); colnames(Vertices)<-c("X", "Y")
+#Vertices<- data.frame(cbind(polygon$X, polygon$Y))
+
+Queries<-cbind(df2$XCENTER, df2$YCENTER); #colnames(Vertices)<-c("X", "Y")
+Vertices <- cbind(polygon$X, polygon$Y)
+  # Test if the localization lies within the X chromosome (Polygon), -1 is NO, 1 is YES:
+  df3<- pip2d(Vertices,Queries)  
+
+localizations.to.filter<-data.frame(df[-1,], df3)
+localizations.to.filter2 <- subset(localizations.to.filter, df3 == 1)
+localizations.to.filter3 <- localizations.to.filter2[1:(length(localizations.to.filter2)-1)]  # remove last column
+colnames(localizations.to.filter3) <- c("FRAME", "XCENTER", "YCENTER", "BRIGHTNESS", "BG","I0","S_X", "S_Y", "THETA", "ECC")
+          
+name.split<-str_split(file.names[i], pattern="/")
+len<-length(str_split(file.names[i], pattern="/")[[1]])
+base.name<-str_split(file.names[i], pattern="/")[[1]][len]
+
+
+if (nrow(localizations.to.filter3)>0){ # $$$$   Aleks added it on 6.05.2022, empty X-chromosomes wont be saved
+
+
+# now save it in the same format as it is for tracking!
+#Option 1 - worked:
+write.table(localizations.to.filter3, file = paste(data, "/X_chromosome_",base.name, sep=""), quote=FALSE, append = FALSE, sep = " ", dec = ".",
+            row.names = FALSE, col.names = TRUE)   # row.names=FALSE ensures that no index is included to the saved data
+             # quote=FALSE prevents from adding "" in every cell
+
+# Option 2 - not worked:
+#write.table(localizations.to.filter3,paste(data, "/X_chromosome_",base.name, sep=""),sep="\t",row.names=FALSE)
+
+} # $$$$
+
+}# % % % % 
+
+
+
+```
+
+
+
