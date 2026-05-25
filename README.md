@@ -5,3 +5,5 @@
                 This code exports the coordinates of the outline of the inactive X-chromosome.
     Code 2of2 - R script. It uses the coordinates of the outlines to filter for single molecule localisations specific to
                 the inactive X-chromosome, i.e. perform SPT Analysis specific to the inactive X-chromosome.
+
+Example input files for Script 1 and 2 are provided.
